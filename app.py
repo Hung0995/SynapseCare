@@ -29,8 +29,8 @@ if sim_state == "Bình thường":
     bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 60, 90, 75)
     hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 50, 80, 58)
 elif sim_state == "Cày đề quá tải":
-    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 80, 100, 92)
-    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 20, 40, 26)
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 80, 100, 120)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 20, 40, 70)
 else:
     bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 100, 140, 118)
     hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 30, 15)
