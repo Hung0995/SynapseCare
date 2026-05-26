@@ -70,7 +70,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(label="💓 Nhịp tim hiện tại", value=f"{bpm} BPM")
 with col2:
-    st.metric(label="📊 Chỉ số HRV (Mức độ Stress)", value=f"{hrv} ms")
+    st.metric(label="📊 Chỉ số HRV (khả năng chống Stress)", value=f"{hrv} ms")
 with col3:
     st.write("**🎮 Thanh Mana Não Bộ (Năng lượng Thần kinh):**")
     st.progress(mana / 100)
