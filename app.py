@@ -10,21 +10,20 @@ st.markdown("---")
 
 # Khởi tạo dữ liệu mẫu nếu chưa có
 if 'bpm_history' not in st.session_state:
-  
     st.session_state.bpm_history = []
 if 'hrv_history' not in st.session_state:
-   
     st.session_state.hrv_history = []
 
 # --- THANH ĐIỀU KHIỂN BÊN TRÁI (SIDEBAR) ---
 st.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
 student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
-base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 50, 100, 60)
+base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
 
 st.sidebar.markdown("---")
 st.sidebar.write("👉 *Kéo các thanh dưới đây để giả lập trạng thái của học sinh trước Ban giám khảo:*")
 sim_state = st.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
 
+# Đồng bộ giới hạn Min - Max từ 40->160 cho BPM và 10->100 cho HRV ở cả 3 trạng thái
 if sim_state == "Bình thường":
     bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 75)
     hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 70)
@@ -35,25 +34,30 @@ else:
     bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 120)
     hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 15)
 
-# Cập nhật lịch sử biểu đồ
-if st.sidebar.button("Cập nhật dữ liệu thời gian thực 🔄"):
+# Nút bấm bây giờ chỉ đóng vai trò đẩy dữ liệu hiện tại vào biểu đồ
+if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
     st.session_state.bpm_history.append(bpm)
     st.session_state.hrv_history.append(hrv)
     if len(st.session_state.bpm_history) > 10:
         st.session_state.bpm_history.pop(0)
         st.session_state.hrv_history.pop(0)
 
-# --- THUẬT TOÁN AI PHÂN TÍCH ---
+# --- THUẬT TOÁN AI PHÂN TÍCH CHẠY THỜI GIAN THỰC THEO THANH GẠT ---
 hrv_ratio = hrv / base_hrv
 mana = int(max(0, min(100, hrv_ratio * 100)))
 
-if bpm > 100 and hrv < 30:
+# Phân vùng AI để đổi màu trực tiếp
+is_panic = bpm > 100 and hrv < 30
+is_burnout = mana < 35 and not is_panic
+is_overload = 35 <= mana < 65 and not is_panic
+
+if is_panic:
     status = "🚨 NGUY CƠ HOẢNG LOẠN (Phòng thi/Áp lực cực độ)"
     action = "Kích hoạt chế độ **'Anti-Choke'**: Rung thiết bị theo nhịp thở 4-7-8 để điều hòa tim mạch ngay lập tức!"
-elif mana < 35:
+elif is_burnout:
     status = "❌ KIỆT QUỆ NĂNG LƯỢNG SINH HỌC (Burnout)"
     action = "Báo động Đỏ! Khóa đồng hồ đếm giờ học. Đề xuất: Đi bộ thả lỏng 15p hoặc nghe nhạc Lo-Fi chữa lành."
-elif 35 <= mana < 65:
+elif is_overload:
     status = "⚠️ QUÁ TẢI NHẸ (Mất tập trung)"
     action = "Hiệu suất não bộ giảm 40%. Đề xuất: Nghỉ Pomodoro 5 phút, uống nước hoặc đổi sang vận động nhẹ."
 else:
@@ -77,18 +81,26 @@ st.markdown("---")
 col_left, col_right = st.columns(2)
 
 with col_left:
-    st.subheader("📈 Biểu đồ giám sát sức khỏe thời gian thực")
+    st.subheader("📈 Biểu đồ giám sát sức khỏe")
     fig = go.Figure()
     fig.add_trace(go.Scatter(y=st.session_state.bpm_history, mode='lines+markers', name='Nhịp tim (BPM)', line=dict(color='firebrick', width=3)))
     fig.add_trace(go.Scatter(y=st.session_state.hrv_history, mode='lines+markers', name='Stress (HRV)', line=dict(color='royalblue', width=3)))
-    fig.update_layout(title='Xu hướng thể trạng trong phiên học tập', xaxis_title='Lần cập nhật mẫu', yaxis_title='Giá trị chỉ số')
+    fig.update_layout(title='Xu hướng thể trạng trong phiên học tập (Bấm nút bên trái để vẽ)', xaxis_title='Lần cập nhật mẫu', yaxis_title='Giá trị chỉ số')
     st.plotly_chart(fig, use_container_width=True)
 
 with col_right:
     st.subheader("🤖 Chẩn đoán từ AI")
     st.info(f"**Học sinh:** {student_name}")
-    st.warning(f"**Trạng thái hệ thần kinh:**\n\n{status}")
-    st.success(f"**Chỉ định hành động:**\n\n{action}")
+    
+    # Ép khối màu của AI thay đổi linh hoạt theo trạng thái thực tế của thanh gạt
+    if is_panic:
+        st.error(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
+    elif is_burnout:
+        st.error(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
+    elif is_overload:
+        st.warning(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
+    else:
+        st.success(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
 
 st.markdown("---")
 st.subheader("👨‍👩‍👧‍👦 Góc dành cho Phụ huynh & Nhà trường (Tính năng Đa năng)")
