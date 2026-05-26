@@ -26,14 +26,14 @@ st.sidebar.write("👉 *Kéo các thanh dưới đây để giả lập trạng 
 sim_state = st.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
 
 if sim_state == "Bình thường":
-    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 60, 90, 75)
-    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 50, 80, 58)
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 60, 100, 75)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 40, 100, 70)
 elif sim_state == "Cày đề quá tải":
-    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 80, 100, 120)
-    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 20, 40, 70)
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 80, 120, 95)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 20, 60, 35)
 else:
-    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 100, 140, 118)
-    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 30, 15)
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 90, 160, 120)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 5, 40, 15)
 
 # Cập nhật lịch sử biểu đồ
 if st.sidebar.button("Cập nhật dữ liệu thời gian thực 🔄"):
