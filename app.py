@@ -19,7 +19,7 @@ if 'hrv_history' not in st.session_state:
 # --- THANH ĐIỀU KHIỂN BÊN TRÁI (SIDEBAR) ---
 st.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
 student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
-base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 50, 90, 60)
+base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 50, 100, 60)
 
 st.sidebar.markdown("---")
 st.sidebar.write("👉 *Kéo các thanh dưới đây để giả lập trạng thái của học sinh trước Ban giám khảo:*")
