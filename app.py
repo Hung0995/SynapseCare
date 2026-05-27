@@ -68,14 +68,4 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(label="💓 Nhịp tim hiện tại", value=f"{bpm} BPM")
 with col2:
-    st.metric(label="📊 Chỉ số HRV (Khả năng chống Stress)", value=f"{hrv} ms")
-with col3:
-    st.write("**🎮 Thanh Mana Não Bộ (Năng lượng Thần kinh):**")
-    st.progress(mana / 100)
-    st.write(f"Mức năng lượng: **{mana}%**")
-
-st.markdown("---")
-
-col_left, col_right = st.columns(2)
-
-BPM_MIN =
+    st.metric
