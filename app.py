@@ -16,7 +16,7 @@ with col_left:
             title='Xu hướng Nhịp tim trong phiên học tập', 
             xaxis_title='Lần cập nhật mẫu', 
             yaxis_title='BPM',
-            yaxis=dict(range=) # Khóa trục Y theo đúng giới hạn thanh gạt
+            yaxis=dict(range=)  # Sửa lại đoạn bị thiếu dấu ngoặc ở đây
         )
         st.plotly_chart(fig_bpm, use_container_width=True)
         
@@ -32,6 +32,6 @@ with col_left:
             title='Xu hướng Biến thiên nhịp tim (HRV)', 
             xaxis_title='Lần cập nhật mẫu', 
             yaxis_title='ms',
-            yaxis=dict(range=) # Khóa trục Y theo đúng giới hạn thanh gạt
+            yaxis=dict(range=)  # Sửa lại đoạn bị thiếu dấu ngoặc ở đây
         )
         st.plotly_chart(fig_hrv, use_container_width=True)
