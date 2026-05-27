@@ -1,36 +1,36 @@
-import streamlit as str_lbl
-import plotly.graph_objects as graph_obj
+import streamlit as st
+import pandas as pd
 
-str_lbl.set_page_config(page_title="SynapseCare Dashboard", layout="wide")
+st.set_page_config(page_title="SynapseCare Dashboard", layout="wide")
 
-str_lbl.title("🧠 SynapseCare - Hệ Thống Tối Ưu Hiệu Suất & Thể Trạng Học Đường")
-str_lbl.subheader("Trợ lý AI phân tích sinh học và quản lý Stress dành cho Gen Z")
-str_lbl.markdown("---")
+st.title("🧠 SynapseCare - Hệ Thống Tối Ưu Hiệu Suất & Thể Trạng Học Đường")
+st.subheader("Trợ lý AI phân tích sinh học và quản lý Stress dành cho Gen Z")
+st.markdown("---")
 
-if 'bpm_history' not in str_lbl.session_state:
-    str_lbl.session_state.bpm_history = []
-if 'hrv_history' not in str_lbl.session_state:
-    str_lbl.session_state.hrv_history = []
-if 'auto_days_overloaded' not in str_lbl.session_state:
-    str_lbl.session_state.auto_days_overloaded = 0
+if 'bpm_history' not in st.session_state:
+    st.session_state.bpm_history = []
+if 'hrv_history' not in st.session_state:
+    st.session_state.hrv_history = []
+if 'auto_days_overloaded' not in st.session_state:
+    st.session_state.auto_days_overloaded = 0
 
-str_lbl.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
-student_name = str_lbl.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
-base_hrv = str_lbl.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
+st.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
+student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
+base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
 
-str_lbl.sidebar.markdown("---")
-str_lbl.sidebar.write("👉 Kéo các thanh dưới đây để giả lập trạng thái của học sinh:")
-sim_state = str_lbl.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
+st.sidebar.markdown("---")
+st.sidebar.write("👉 Kéo các thanh dưới đây để giả lập trạng thái của học sinh:")
+sim_state = st.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
 
 if sim_state == "Bình thường":
-    bpm = str_lbl.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 75)
-    hrv = str_lbl.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 70)
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 75)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 70)
 elif sim_state == "Cày đề quá tải":
-    bpm = str_lbl.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 95)
-    hrv = str_lbl.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 35)
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 95)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 35)
 else:
-    bpm = str_lbl.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 120)
-    hrv = str_lbl.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 15)
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 120)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 15)
 
 hrv_ratio = hrv / base_hrv
 mana = int(max(0, min(100, hrv_ratio * 100)))
@@ -39,17 +39,17 @@ is_panic = bpm > 100 and hrv < 30
 is_burnout = mana < 35 and not is_panic
 is_overload = 35 <= mana < 65 and not is_panic
 
-if str_lbl.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
-    str_lbl.session_state.bpm_history.append(bpm)
-    str_lbl.session_state.hrv_history.append(hrv)
-    if len(str_lbl.session_state.bpm_history) > 10:
-        str_lbl.session_state.bpm_history.pop(0)
-        str_lbl.session_state.hrv_history.pop(0)
+if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
+    st.session_state.bpm_history.append(bpm)
+    st.session_state.hrv_history.append(hrv)
+    if len(st.session_state.bpm_history) > 10:
+        st.session_state.bpm_history.pop(0)
+        st.session_state.hrv_history.pop(0)
         
     if is_panic or is_burnout or is_overload:
-        str_lbl.session_state.auto_days_overloaded += 1
+        st.session_state.auto_days_overloaded += 1
     elif bpm <= 80 and hrv >= 60:
-        str_lbl.session_state.auto_days_overloaded = 0
+        st.session_state.auto_days_overloaded = 0
 
 if is_panic:
     status = "🚨 NGUY CƠ HOẢNG LOẠN (Phòng thi/Áp lực cực độ)"
@@ -57,3 +57,81 @@ if is_panic:
 elif is_burnout:
     status = "❌ KIỆT QUỆ NĂNG LƯỢNG SINH HỌC (Burnout)"
     action = "Báo động Đỏ! Khóa đồng hồ đếm giờ học. Đề xuất: Đi bộ thả lỏng 15p hoặc nghe nhạc Lo-Fi chữa lành."
+elif is_overload:
+    status = "⚠️ QUÁ TẢI NHẸ (Mất tập trung)"
+    action = "Hiệu suất não bộ giảm 40%. Đề xuất: Nghỉ Pomodoro 5 phút, uống nước hoặc đổi sang vận động nhẹ."
+else:
+    status = "✅ TRẠNG THÁI VÀNG (Peak Performance)"
+    action = "Não bộ đang ở trạng thái tối ưu nhất. Thích hợp để học các môn tư duy cao hoặc cày đề khó!"
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric(label="💓 Nhịp tim hiện tại", value=str(bpm) + " BPM")
+with col2:
+    st.metric(label="📊 Chỉ số HRV (Khả năng chống Stress)", value=str(hrv) + " ms")
+with col3:
+    st.write("**🎮 Thanh Mana Não Bộ (Năng lượng Thần kinh):**")
+    st.progress(float(mana / 100.0))
+    st.write("Mức năng lượng: " + str(mana) + "%")
+
+st.markdown("---")
+
+col_left, col_right = st.columns(2)
+
+with col_left:
+    st.subheader("📈 Biểu đồ giám sát sức khỏe")
+    tab_bpm, tab_hrv = st.tabs(["💓 Nhịp tim (BPM)", "📊 Khả năng chống Stress (HRV)"])
+    
+    with tab_bpm:
+        if len(st.session_state.bpm_history) > 0:
+            df_bpm = pd.DataFrame(st.session_state.bpm_history, columns=["Nhịp tim"])
+            st.line_chart(df_bpm)
+        else:
+            st.write("Chưa có dữ liệu. Hãy bấm 'Ghi dữ liệu vào biểu đồ' ở thanh bên cạnh.")
+        
+    with tab_hrv:
+        if len(st.session_state.hrv_history) > 0:
+            df_hrv = pd.DataFrame(st.session_state.hrv_history, columns=["Chỉ số HRV"])
+            st.line_chart(df_hrv)
+        else:
+            st.write("Chưa có dữ liệu. Hãy bấm 'Ghi dữ liệu vào biểu đồ' ở thanh bên cạnh.")
+
+with col_right:
+    st.subheader("🤖 Chẩn đoán từ AI")
+    st.info("Học sinh: " + str(student_name))
+    if is_panic or is_burnout:
+        st.error(status + "\n\n" + action)
+    elif is_overload:
+        st.warning(status + "\n\n" + action)
+    else:
+        st.success(status + "\n\n" + action)
+
+# --- GÓC PHỤ HUYNH CHỐNG LỖI DỊCH THUẬT VÀ TĂNG TIẾN VÔ HẠN ---
+st.markdown("---")
+st.subheader("👨‍👩‍👧‍👦 Góc dành cho Phụ huynh & Nhà trường (Tính năng Đa năng)")
+
+days_overloaded = st.session_state.auto_days_overloaded
+
+str_lbl_metric_text = "Tổng số ngày quá tải liên tục ghi nhận từ thiết bị"
+st.metric(label=str_lbl_metric_text, value=str(days_overloaded) + " Ngày")
+
+val_progress = min(1.0, float(days_overloaded / 4.0)) if days_overloaded > 0 else 0.0
+st.progress(val_progress)
+
+if days_overloaded == 0:
+    st.info("Trạng thái: An toàn - Chưa ghi nhận ngày quá tải nào.")
+elif 1 <= days_overloaded <= 2:
+    st.success("Trạng thái: Xanh lá (1-2 ngày) - Áp lực tích tụ mức độ nhẹ.")
+elif days_overloaded == 3:
+    st.warning("Trạng thái: Vàng (3 ngày) - Ngưỡng báo động cần chú ý giảm tải.")
+else:
+    st.error("Trạng thái: Đỏ (Từ 4 ngày trở lên) - Nguy hiểm! Cơ thể kiệt quệ kéo dài.")
+
+if days_overloaded >= 3:
+    st.error("📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH")
+    st.write("- Học sinh: " + str(student_name))
+    st.write("- Phân tích: Chỉ số phục hồi thần kinh (HRV) liên tục dưới ngưỡng an toàn nhiều ngày qua.")
+    st.write("- Kết luận: Đây là biểu hiện suy nhược cơ thể khách quan dựa trên số liệu y sinh.")
+    st.write("- Khuyến nghị: Gia đình cần giảm 30% khối lượng học tập để tránh nguy cơ suy sụp tâm thần.")
+else:
+    st.success("📋 Tình trạng sức khỏe tuần này: Thể trạng học sinh ở mức ổn định, các chỉ số đạt chuẩn phục hồi.")
