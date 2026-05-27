@@ -1,37 +1,86 @@
+import streamlit as st
+import plotly.graph_objects as go
+
+# Cấu hình trang web hiển thị
+st.set_page_config(page_title="SynapseCare Dashboard", layout="wide")
+
+st.title("🧠 SynapseCare - Hệ Thống Tối Ưu Hiệu Suất & Thể Trạng Học Đường")
+st.subheader("Trợ lý AI phân tích sinh học và quản lý Stress dành cho Gen Z")
+st.markdown("---")
+
+# Khởi tạo dữ liệu mẫu nếu chưa có
+if 'bpm_history' not in st.session_state:
+    st.session_state.bpm_history = []
+if 'hrv_history' not in st.session_state:
+    st.session_state.hrv_history = []
+
+# --- THANH ĐIỀU KHIỂN BÊN TRÁI (SIDEBAR) ---
+st.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
+student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
+base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
+
+st.sidebar.markdown("---")
+st.sidebar.write("👉 *Kéo các thanh dưới đây để giả lập trạng thái của học sinh trước Ban giám khảo:*")
+sim_state = st.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
+
+# Đồng bộ giới hạn Min - Max từ 40->160 cho BPM và 10->100 cho HRV ở cả 3 trạng thái
+if sim_state == "Bình thường":
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 75)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 70)
+elif sim_state == "Cày đề quá tải":
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 95)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 35)
+else:
+    bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 120)
+    hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 15)
+
+# Nút bấm bây giờ chỉ đóng vai trò đẩy dữ liệu hiện tại vào biểu đồ
+if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
+    st.session_state.bpm_history.append(bpm)
+    st.session_state.hrv_history.append(hrv)
+    if len(st.session_state.bpm_history) > 10:
+        st.session_state.bpm_history.pop(0)
+        st.session_state.hrv_history.pop(0)
+
+# --- THUẬT TOÁN AI PHÂN TÍCH CHẠY THỜI GIAN THỰC THEO THANH GẠT ---
+hrv_ratio = hrv / base_hrv
+mana = int(max(0, min(100, hrv_ratio * 100)))
+
+# Phân vùng AI để đổi màu trực tiếp
+is_panic = bpm > 100 and hrv < 30
+is_burnout = mana < 35 and not is_panic
+is_overload = 35 <= mana < 65 and not is_panic
+
+if is_panic:
+    status = "🚨 NGUY CƠ HOẢNG LOẠN (Phòng thi/Áp lực cực độ)"
+    action = "Kích hoạt chế độ **'Anti-Choke'**: Rung thiết bị theo nhịp thở 4-7-8 để điều hòa tim mạch ngay lập tức!"
+elif is_burnout:
+    status = "❌ KIỆT QUỆ NĂNG LƯỢNG SINH HỌC (Burnout)"
+    action = "Báo động Đỏ! Khóa đồng hồ đếm giờ học. Đề xuất: Đi bộ thả lỏng 15p hoặc nghe nhạc Lo-Fi chữa lành."
+elif is_overload:
+    status = "⚠️ QUÁ TẢI NHẸ (Mất tập trung)"
+    action = "Hiệu suất não bộ giảm 40%. Đề xuất: Nghỉ Pomodoro 5 phút, uống nước hoặc đổi sang vận động nhẹ."
+else:
+    status = "✅ TRẠNG THÁI VÀNG (Peak Performance)"
+    action = "Não bộ đang ở trạng thái tối ưu nhất. Thích hợp để học các môn tư duy cao hoặc cày đề khó!"
+
+# --- HIỂN THỊ GIAO DIỆN CHÍNH ---
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(label="💓 Nhịp tim hiện tại", value=f"{bpm} BPM")
+with col2:
+    st.metric(label="📊 Chỉ số HRV (Khả năng chống Stress)", value=f"{hrv} ms")
+with col3:
+    st.write("**🎮 Thanh Mana Não Bộ (Năng lượng Thần kinh):**")
+    st.progress(mana / 100)
+    st.write(f"Mức năng lượng: **{mana}%**")
+
+st.markdown("---")
+
+col_left, col_right = st.columns(2)
+
 with col_left:
     st.subheader("📈 Biểu đồ giám sát sức khỏe")
     
-    # Tạo 2 Tab riêng biệt cho Nhịp tim và HRV
-    tab_bpm, tab_hrv = st.tabs(["💓 Nhịp tim (BPM)", "📊 Khả năng chống Stress (HRV)"])
-    
-    with tab_bpm:
-        fig_bpm = go.Figure()
-        fig_bpm.add_trace(go.Scatter(
-            y=st.session_state.bpm_history, 
-            mode='lines+markers', 
-            name='Nhịp tim (BPM)', 
-            line=dict(color='firebrick', width=3)
-        ))
-        fig_bpm.update_layout(
-            title='Xu hướng Nhịp tim trong phiên học tập', 
-            xaxis_title='Lần cập nhật mẫu', 
-            yaxis_title='BPM',
-            yaxis=dict(range=)  # Sửa lại đoạn bị thiếu dấu ngoặc ở đây
-        )
-        st.plotly_chart(fig_bpm, use_container_width=True)
-        
-    with tab_hrv:
-        fig_hrv = go.Figure()
-        fig_hrv.add_trace(go.Scatter(
-            y=st.session_state.hrv_history, 
-            mode='lines+markers', 
-            name='Stress (HRV)', 
-            line=dict(color='royalblue', width=3)
-        ))
-        fig_hrv.update_layout(
-            title='Xu hướng Biến thiên nhịp tim (HRV)', 
-            xaxis_title='Lần cập nhật mẫu', 
-            yaxis_title='ms',
-            yaxis=dict(range=)  # Sửa lại đoạn bị thiếu dấu ngoặc ở đây
-        )
-        st.plotly_chart(fig_hrv, use_container_width=True)
+    # Tạo 2 Tab riêng
