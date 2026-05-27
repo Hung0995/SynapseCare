@@ -61,4 +61,16 @@ if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
     display_axis = f"#{point_index} ({time_str})"
     new_record = {
         "Mốc thời gian": display_axis,
-        "
+        "Giờ gốc": time_str,
+        "Nhịp tim (BPM)": int(bpm),
+        "Chỉ số HRV (ms)": int(hrv)
+    }
+    st.session_state.current_day_records.append(new_record)
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("📅 Chức năng mô phỏng Chu kỳ Ngày")
+current_date_string = st.session_state.simulated_date.strftime("%d/%m/%Y")
+st.sidebar.info("Ngày mô phỏng hiện tại: " + str(current_date_string))
+
+# NÚT 2: QUA NGÀY MỚI - TỔNG HỢP VÀ RESET
+if st.sidebar.button("Qua ngày mới ➡️ (
