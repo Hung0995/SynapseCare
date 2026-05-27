@@ -19,7 +19,7 @@ student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
 base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
 
 st.sidebar.markdown("---")
-st.sidebar.write("👉 *Kéo các thanh dưới đây để giả lập trạng thái của học sinh trước Ban giám khảo:*")
+st.sidebar.write("👉 Kéo các thanh dưới đây để giả lập trạng thái của học sinh:")
 sim_state = st.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
 
 if sim_state == "Bình thường":
@@ -53,7 +53,7 @@ if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
 
 if is_panic:
     status = "🚨 NGUY CƠ HOẢNG LOẠN (Phòng thi/Áp lực cực độ)"
-    action = "Kích hoạt chế độ **'Anti-Choke'**: Rung thiết bị theo nhịp thở 4-7-8 để điều hòa tim mạch ngay lập tức!"
+    action = "Kích hoạt chế độ Anti-Choke: Rung thiết bị theo nhịp thở 4-7-8 để điều hòa tim mạch ngay lập tức!"
 elif is_burnout:
     status = "❌ KIỆT QUỆ NĂNG LƯỢNG SINH HỌC (Burnout)"
     action = "Báo động Đỏ! Khóa đồng hồ đếm giờ học. Đề xuất: Đi bộ thả lỏng 15p hoặc nghe nhạc Lo-Fi chữa lành."
@@ -66,6 +66,37 @@ else:
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric(label="💓 Nhịp tim hiện tại", value=f"{bpm} BPM")
+    st.metric(label="💓 Nhịp tim hiện tại", value=str(bpm) + " BPM")
 with col2:
-    st.metric
+    st.metric(label="📊 Chỉ số HRV (Khả năng chống Stress)", value=str(hrv) + " ms")
+with col3:
+    st.write("**🎮 Thanh Mana Não Bộ (Năng lượng Thần kinh):**")
+    st.progress(float(mana / 100.0))
+    st.write("Mức năng lượng: " + str(mana) + "%")
+
+st.markdown("---")
+
+col_left, col_right = st.columns(2)
+
+with col_left:
+    st.subheader("📈 Biểu đồ giám sát sức khỏe")
+    tab_bpm, tab_hrv = st.tabs(["💓 Nhịp tim (BPM)", "📊 Khả năng chống Stress (HRV)"])
+    
+    with tab_bpm:
+        fig_bpm = go.Figure()
+        fig_bpm.add_trace(go.Scatter(y=st.session_state.bpm_history, mode='lines+markers', name='Nhịp tim', line=dict(color='firebrick', width=3)))
+        fig_bpm.update_layout(title='Xu hướng Nhịp tim', xaxis_title='Mẫu', yaxis_title='BPM', yaxis_range=)
+        st.plotly_chart(fig_bpm, use_container_width=True)
+        
+    with tab_hrv:
+        fig_hrv = go.Figure()
+        fig_hrv.add_trace(go.Scatter(y=st.session_state.hrv_history, mode='lines+markers', name='HRV', line=dict(color='royalblue', width=3)))
+        fig_hrv.update_layout(title='Xu hướng HRV', xaxis_title='Mẫu', yaxis_title='ms', yaxis_range=)
+        st.plotly_chart(fig_hrv, use_container_width=True)
+
+with col_right:
+    st.subheader("🤖 Chẩn đoán từ AI")
+    st.info("Học sinh: " + str(student_name))
+    if is_panic or is_burnout:
+        st.error(status + "\n\n" + action)
+    elif is_overload:
