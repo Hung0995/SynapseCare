@@ -54,6 +54,11 @@ is_panic = bpm > 100 and hrv < 30
 is_burnout = mana < 35 and not is_panic
 is_overload = 35 <= mana < 65 and not is_panic
 
-# NÚT 1: GHI DỮ LIỆU TRONG NGÀY (Tăng độ nhạy bằng cách lưu cả giây và số thứ tự điểm)
+# NÚT 1: GHI DỮ LIỆU TRONG NGÀY
 if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
-    # Lấy giờ phút giây hiện tại (hoặc cộng thêm giây mô
+    time_str = datetime.now(tz_vietnam).strftime("%H:%M:%S")
+    point_index = len(st.session_state.current_day_records) + 1
+    display_axis = f"#{point_index} ({time_str})"
+    new_record = {
+        "Mốc thời gian": display_axis,
+        "
