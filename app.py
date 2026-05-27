@@ -66,7 +66,6 @@ if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("📅 Chức năng mô phỏng Chu kỳ Ngày")
-# Tách biệt hiển thị chuỗi ngày ra khỏi mã xử lý đồ thị để tránh lỗi NameError
 current_date_string = st.session_state.simulated_date.strftime("%d/%m/%Y")
 st.sidebar.info("Ngày mô phỏng hiện tại: " + str(current_date_string))
 
@@ -112,7 +111,7 @@ if st.sidebar.button("Qua ngày mới ➡️ (Tổng hợp & Reset)"):
     st.session_state.simulated_date += timedelta(days=1)
     st.rerun()
 
-# --- 2. KHU VỰC HIỂN THỊ CÁC CHỈ SỐ Ở GIỮA (Cố định tuyệt đối) ---
+# --- 2. KHU VỰC HIỂN THỊ CÁC CHỈ SỐ Ở GIỮA ---
 col_m1, col_m2, col_m3 = st.columns(3)
 with col_m1:
     st.metric(label="💓 Nhịp tim hiện tại", value=str(bpm) + " BPM")
@@ -141,13 +140,16 @@ else:
     status = "✅ TRẠNG THÁI VÀNG (Peak Performance)"
     action = "Não bộ đang ở trạng thái tối ưu nhất. Thích hợp để học các môn tư duy cao hoặc cày đề khó!"
 
-# CỘT BÊN TRÁI: BIỂU ĐỒ CHI TIẾT
+# CỘT BÊN TRÁI: BIỂU ĐỒ CHI TIẾT (Đã áp dụng logic ẩn ngày giờ trống)
 with col_left:
     st.subheader("📈 Biểu đồ dữ liệu giám sát hôm nay")
-    st.write("Mốc ngày hiện tại hệ thống: " + str(current_date_string))
+    
     tab_bpm, tab_hrv, tab_data = st.tabs(["💓 Nhịp tim", "📊 Chỉ số HRV", "📋 Nhật ký hôm nay"])
     
     if len(st.session_state.current_day_records) > 0:
+        # Chỉ khi có dữ liệu mới hiện dòng ngày giờ thực tế lên tiêu đề phụ để biểu đồ cực sạch
+        st.write("📅 Mốc ngày hiện tại của chu kỳ: **" + str(current_date_string) + "**")
+        
         df_current = pd.DataFrame(st.session_state.current_day_records)
         with tab_bpm:
             st.line_chart(data=df_current, x="Giờ", y="Nhịp tim (BPM)")
@@ -156,10 +158,11 @@ with col_left:
         with tab_data:
             st.dataframe(df_current, use_container_width=True)
     else:
-        empty_msg = "Chưa có dữ liệu mới cho ngày hôm nay. Hãy bấm nút 'Ghi dữ liệu' ở sidebar để theo dõi."
-        with tab_bpm: st.write(empty_msg)
-        with tab_hrv: st.write(empty_msg)
-        with tab_data: st.write(empty_msg)
+        # Khi chưa bấm nút ghi, giao diện sẽ ẩn hoàn toàn ngày giờ và hiện thông báo hướng dẫn sạch sẽ
+        empty_msg = "🔄 Chu kỳ ngày mới trống. Hãy bấm nút 'Ghi dữ liệu vào biểu đồ' ở thanh bên để nạp dữ liệu sinh học."
+        with tab_bpm: st.info(empty_msg)
+        with tab_hrv: st.info(empty_msg)
+        with tab_data: st.info(empty_msg)
 
 # CỘT BÊN PHẢI: AI CHẨN ĐOÁN & KHO LƯU TRỮ ẨN
 with col_right:
