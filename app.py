@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from datetime import datetime
 
 st.set_page_config(page_title="SynapseCare Dashboard", layout="wide")
 
@@ -7,41 +8,36 @@ st.title("🧠 SynapseCare - Hệ Thống Tối Ưu Hiệu Suất & Thể Trạn
 st.subheader("Trợ lý AI phân tích sinh học và quản lý Stress dành cho Gen Z")
 st.markdown("---")
 
-if 'bpm_history' not in st.session_state:
-    st.session_state.bpm_history = []
-if 'hrv_history' not in st.session_state:
-    st.session_state.hrv_history = []
+# Khởi tạo cấu trúc lưu trữ lịch sử nâng cấp (Chứa cả mốc thời gian thực)
+if 'health_records' not in st.session_state:
+    st.session_state.health_records = []
 if 'auto_days_overloaded' not in st.session_state:
     st.session_state.auto_days_overloaded = 0
 
 st.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
 student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
 
-# 1. Người dùng chọn HRV nền (Gốc tọa độ thể trạng của học sinh)
+# Người dùng chọn HRV nền (Thể trạng gốc của học sinh)
 base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
 
 st.sidebar.markdown("---")
 st.sidebar.write("👉 Chọn trạng thái nhanh dưới đây (Các chỉ số bên dưới sẽ tự biến đổi theo HRV nền):")
 sim_state = st.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
 
-# 2. Xử lý logic biến đổi động: Chỉ số thực tế phụ thuộc trực tiếp vào base_hrv
+# Xử lý logic biến đổi động: Chỉ số thực tế phụ thuộc trực tiếp vào base_hrv
 if sim_state == "Bình thường":
-    # HRV thực tế đạt mức tối ưu (xấp xỉ bằng hoặc cao hơn HRV nền một chút)
     calc_bpm = 75
     calc_hrv = int(base_hrv * 1.0)
 elif sim_state == "Cày đề quá tải":
-    # HRV thực tế tụt xuống mức 50% so với thể trạng nền
     calc_bpm = 95
     calc_hrv = int(base_hrv * 0.5)
 else:
-    # Áp lực phòng thi cực độ: HRV tụt dốc không phanh xuống mức 20% so với nền
     calc_bpm = 120
     calc_hrv = int(base_hrv * 0.2)
 
-# Giới hạn cận trên và dưới của HRV để tránh lỗi toán học
 calc_hrv = max(10, min(100, calc_hrv))
 
-# 3. Hiển thị thanh trượt ở chế độ xem kết quả tính toán động
+# Hiển thị thanh trượt kết quả tính toán
 bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, calc_bpm)
 hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, calc_hrv)
 
@@ -52,13 +48,26 @@ is_panic = bpm > 100 and hrv < 30
 is_burnout = mana < 35 and not is_panic
 is_overload = 35 <= mana < 65 and not is_panic
 
+# --- XỬ LÝ LƯU TRỮ THÔNG TIN THEO NGÀY THÁNG NĂM THỰC THẾ ---
 if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
-    st.session_state.bpm_history.append(bpm)
-    st.session_state.hrv_history.append(hrv)
-    if len(st.session_state.bpm_history) > 10:
-        st.session_state.bpm_history.pop(0)
-        st.session_state.hrv_history.pop(0)
+    # Lấy mốc thời gian hiện tại của hệ thống và định dạng theo kiểu Ngày/Tháng/Năm Giờ:Phút:Giây
+    current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    
+    # Tạo một bản ghi dữ liệu hoàn chỉnh
+    new_record = {
+        "Thời gian": current_time,
+        "Nhịp tim (BPM)": bpm,
+        "Chỉ số HRV (ms)": hrv
+    }
+    
+    # Lưu vào danh sách lịch sử
+    st.session_state.health_records.append(new_record)
+    
+    # Giới hạn tối đa lưu 10 bản ghi gần nhất để biểu đồ không bị rối
+    if len(st.session_state.health_records) > 10:
+        st.session_state.health_records.pop(0)
         
+    # Tính toán số ngày quá tải liên tục
     if is_panic or is_burnout or is_overload:
         st.session_state.auto_days_overloaded += 1
     elif bpm <= 80 and hrv >= 60:
@@ -92,22 +101,31 @@ st.markdown("---")
 col_left, col_right = st.columns(2)
 
 with col_left:
-    st.subheader("📈 Biểu đồ giám sát sức khỏe")
-    tab_bpm, tab_hrv = st.tabs(["💓 Nhịp tim (BPM)", "📊 Khả năng chống Stress (HRV)"])
+    st.subheader("📈 Biểu đồ giám sát sức khỏe theo ngày")
+    tab_bpm, tab_hrv, tab_data = st.tabs(["💓 Nhịp tim", "📊 Chỉ số HRV", "📋 Nhật ký dữ liệu"])
     
-    with tab_bpm:
-        if len(st.session_state.bpm_history) > 0:
-            df_bpm = pd.DataFrame(st.session_state.bpm_history, columns=["Nhịp tim"])
-            st.line_chart(df_bpm)
-        else:
-            st.write("Chưa có dữ liệu. Hãy bấm 'Ghi dữ liệu vào biểu đồ' ở thanh bên cạnh.")
+    if len(st.session_state.health_records) > 0:
+        # Chuyển đổi danh sách record thành bảng DataFrame của Pandas
+        df_history = pd.DataFrame(st.session_state.health_records)
         
-    with tab_hrv:
-        if len(st.session_state.hrv_history) > 0:
-            df_hrv = pd.DataFrame(st.session_state.hrv_history, columns=["Chỉ số HRV"])
-            st.line_chart(df_hrv)
-        else:
-            st.write("Chưa có dữ liệu. Hãy bấm 'Ghi dữ liệu vào biểu đồ' ở thanh bên cạnh.")
+        with tab_bpm:
+            # Vẽ biểu đồ đường lấy cột "Thời gian" làm trục hoành X, "Nhịp tim (BPM)" làm trục tung Y
+            st.line_chart(data=df_history, x="Thời gian", y="Nhịp tim (BPM)")
+            
+        with tab_hrv:
+            # Vẽ biểu đồ đường lấy cột "Thời gian" làm trục hoành X, "Chỉ số HRV (ms)" làm trục tung Y
+            st.line_chart(data=df_history, x="Thời gian", y="Chỉ số HRV (ms)")
+            
+        with tab_data:
+            st.write("📝 **Chi tiết lịch sử lưu trữ theo mốc thời gian:**")
+            st.dataframe(df_history, use_container_width=True)
+    else:
+        with tab_bpm:
+            st.write("Chưa có dữ liệu lịch sử thời gian.")
+        with tab_hrv:
+            st.write("Chưa có dữ liệu lịch sử thời gian.")
+        with tab_data:
+            st.write("Chưa có nhật ký nào được ghi nhận.")
 
 with col_right:
     st.subheader("🤖 Chẩn đoán từ AI")
