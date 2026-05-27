@@ -131,4 +131,8 @@ days_overloaded = st.slider("Giả lập số ngày học sinh bị quá tải l
 
 if days_overloaded >= 3:
     st.error(f"📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH EM {student_name.upper()}")
-    st.markdown(f"* **Phân tích:** Hệ thống ghi nhận chỉ số phục hồi thần kinh thực vật (HRV) liên tục dưới ngưỡng an toàn trong {days_overloaded} ngày qua
+    st.write(f"* **Phân tích:** Hệ thống ghi nhận chỉ số phục hồi thần kinh thực vật (HRV) liên tục dưới ngưỡng an toàn trong {days_overloaded} ngày qua. Cơ thể đang ở trạng thái kiệt quệ sinh học (Physical Burnout).")
+    st.write("* **Kết luận:** Đây là biểu hiện suy nhược cơ thể khách quan dựa trên số liệu y sinh, không phải sự lười biếng hay viện cớ.")
+    st.write("* **Khuyến nghị:** Gia đình cần chủ động cắt giảm 30% khối lượng học thêm hoặc thời gian cày đêm của em để tránh nguy cơ suy sụp tâm thần đột ngột trước kỳ thi.")
+else:
+    st.success("📋 Tình trạng sức khỏe tuần này: Thể trạng học sinh ở mức ổn định, các chỉ số giấc ngủ và nhịp tim nghỉ ngơi đạt chuẩn.")
