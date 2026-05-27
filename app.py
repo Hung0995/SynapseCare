@@ -47,7 +47,6 @@ if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
         st.session_state.hrv_history.pop(0)
         
     if is_panic or is_burnout or is_overload:
-        # ĐÃ PHÁ BỎ GIỚI HẠN: Số ngày tăng tự do không bị chặn ở số 7 nữa
         st.session_state.auto_days_overloaded += 1
     elif bpm <= 80 and hrv >= 60:
         st.session_state.auto_days_overloaded = 0
@@ -110,26 +109,10 @@ with col_right:
     else:
         st.success(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
 
-# --- GÓC PHỤ HUYNH KHÔNG GIỚI HẠN SỐ NGÀY ---
+# --- GÓC PHỤ HUYNH: THANH THƯỚC ĐO CỐ ĐỊNH CHU KỲ VÔ HẠN ---
 st.markdown("---")
 st.subheader("👨‍👩‍👧‍👦 Góc dành cho Phụ huynh & Nhà trường (Tính năng Đa năng)")
 
 days = st.session_state.auto_days_overloaded
 
-# Hiển thị số ngày quá tải tích lũy bằng ô trạng thái màu sắc động
-if days == 0:
-    st.success(f"🟢 **Hệ thống ghi nhận:** Học sinh hiện tại không bị quá tải tích lũy. Thể trạng phục hồi tốt.")
-elif 1 <= days <= 2:
-    st.success(f"🟢 **Hệ thống ghi nhận:** Tích tụ {days} ngày áp lực liên tiếp (Mức độ nhẹ - Trong ngưỡng kiểm soát).")
-elif days == 3:
-    st.warning(f"🟡 **Hệ thống ghi nhận:** Tích tụ {days} ngày quá tải liên tiếp (Chạm ngưỡng báo động đỏ!).")
-else:
-    st.error(f"🔴 **BÁO ĐỘNG NGUY HIỂM:** Học sinh đã bị quá tải liên tục {days} ngày! Nguy cơ kiệt quệ tâm thần rất cao.")
-
-if days >= 3:
-    st.error(f"📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH EM {student_name.upper()}")
-    st.write(f"* **Phân tích:** Chỉ số phục hồi thần kinh (HRV) liên tục dưới ngưỡng an toàn trong {days} ngày qua.")
-    st.write("* **Kết luận:** Đây là biểu hiện suy nhược cơ thể khách quan dựa trên số liệu y sinh.")
-    st.write("* **Khuyến nghị:** Gia đình cần giảm 30% khối lượng học tập để tránh nguy cơ suy sụp tâm thần trước kỳ thi.")
-else:
-    st.success("📋 Tình trạng sức khỏe tuần này: Thể trạng học sinh ở mức ổn định, các chỉ số đạt chuẩn phục hồi. Học sinh đã giải tỏa hết stress.")
+st.write(f"📊 **Bảng theo dõi: Đã tích tụ {days} ngày quá tải liên tục
