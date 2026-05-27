@@ -5,8 +5,8 @@ from zoneinfo import ZoneInfo
 
 st.set_page_config(page_title="SynapseCare Dashboard", layout="wide")
 
-st.title("🧠 SynapseCare - Hệ Thống Tối Ưu Hiệu Suất & Thể Trạng Học Đường")
-st.subheader("Trợ lý AI phân tích sinh học và quản lý Stress dành cho Gen Z")
+st.title("🧠 SynapseCare – Hệ thống theo dõi stress sinh lý học đường dựa trên BPM và HRV")
+st.subheader("Giải pháp phân tích dữ liệu sinh học dựa trên chỉ số BPM và HRV dành cho Gen Z")
 st.markdown("---")
 
 tz_vietnam = ZoneInfo("Asia/Ho_Chi_Minh")
