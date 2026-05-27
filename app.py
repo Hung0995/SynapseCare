@@ -113,4 +113,98 @@ col_m1, col_m2, col_m3 = st.columns(3)
 with col_m1:
     st.metric(label="💓 Nhịp tim hiện tại", value=f"{bpm} BPM")
 with col_m2:
-    st.metric
+    st.metric(label="📊 Chỉ số HRV (Chống Stress)", value=f"{hrv} ms")
+with col_m3:
+    st.write("**🎮 Thanh Mana Não Bộ:**")
+    st.progress(float(mana / 100.0))
+    st.write(f"Mức năng lượng: {mana}%")
+
+st.markdown("---")
+
+# --- 3. MAIN COLUMNS ---
+col_left, col_right = st.columns(2)
+
+if is_panic:
+    status = "🚨 NGUY CƠ HOẢNG LOẠN (Phòng thi/Áp lực cực độ)"
+    action = "Kích hoạt chế độ Anti-Choke: Rung thiết bị theo nhịp thở 4-7-8 để điều hòa tim mạch ngay lập tức!"
+elif is_burnout:
+    status = "❌ KIỆT QUỆ NĂNG LƯỢNG SINH HỌC (Burnout)"
+    action = "Báo động Đỏ! Khóa đồng hồ đếm giờ học. Đề xuất: Đi bộ thả lỏng 15p hoặc nghe nhạc Lo-Fi chữa lành."
+elif is_overload:
+    status = "⚠️ QUÁ TẢI NHẸ (Mất tập trung)"
+    action = "Hiệu suất não bộ giảm 40%. Đề xuất: Nghỉ Pomodoro 5 phút, uống nước hoặc đổi sang vận động nhẹ."
+else:
+    status = "✅ TRẠNG THÁI VÀNG (Peak Performance)"
+    action = "Não bộ đang ở trạng thái tối ưu nhất. Thích hợp để học các môn tư duy cao hoặc cày đề khó!"
+
+# CỘT TRÁI: BIỂU ĐỒ (ĐỘ NHẠY CAO & CẮT GIÂY TRONG NHẬT KÝ)
+with col_left:
+    st.subheader("📈 Biểu đồ dữ liệu giám sát hôm nay")
+    tab_bpm, tab_hrv, tab_data = st.tabs(["💓 Nhịp tim", "📊 Chỉ số HRV", "📋 Nhật ký hôm nay"])
+    
+    if len(st.session_state.current_day_records) > 0:
+        st.write(f"📅 Mốc ngày hiện tại của chu kỳ: **{current_date_string}**")
+        df_current = pd.DataFrame(st.session_state.current_day_records)
+        
+        with tab_bpm:
+            st.line_chart(data=df_current, x="Mốc thời gian", y="Nhịp tim (BPM)")
+        with tab_hrv:
+            st.line_chart(data=df_current, x="Mốc thời gian", y="Chỉ số HRV (ms)")
+        with tab_data:
+            df_display = df_current.copy()
+            df_display["Thời gian"] = df_display["Giờ gốc"].apply(lambda x: str(x)[:-3])
+            df_display = df_display[["Thời gian", "Nhịp tim (BPM)", "Chỉ số HRV (ms)"]]
+            st.dataframe(df_display, use_container_width=True)
+    else:
+        empty_msg = "🔄 Chu kỳ ngày mới trống. Hãy bấm nút 'Ghi dữ liệu vào biểu đồ' ở thanh bên để nạp dữ liệu sinh học."
+        with tab_bpm: st.info(empty_msg)
+        with tab_hrv: st.info(empty_msg)
+        with tab_data: st.info(empty_msg)
+
+# CỘT PHẢI: AI DIAGNOSIS
+with col_right:
+    st.subheader("🤖 Chẩn đoán từ AI")
+    st.info(f"Học sinh: {student_name}")
+    if is_panic or is_burnout:
+        st.error(f"{status}\n\n{action}")
+    elif is_overload:
+        st.warning(f"{status}\n\n{action}")
+    else:
+        st.success(f"{status}\n\n{action}")
+        
+    st.markdown("---")
+    with st.expander("🗂️ Bấm để mở Kho lưu trữ dữ liệu tổng hợp các ngày trước"):
+        if len(st.session_state.daily_summary_history) > 0:
+            df_history = pd.DataFrame(st.session_state.daily_summary_history)
+            st.write("📋 **Bảng tổng hợp sức khỏe theo từng ngày:**")
+            st.dataframe(df_history, use_container_width=True)
+        else:
+            st.write("Chưa có lịch sử lưu trữ của ngày cũ. Hãy bấm 'Qua ngày mới' để bắt đầu tích lũy.")
+
+# --- 4. PARENT CORNER ---
+st.markdown("---")
+st.subheader("👨‍👩‍👧‍👦 Góc dành cho Phụ huynh & Nhà trường (Tính năng Đa năng)")
+
+days_overloaded = st.session_state.auto_days_overloaded
+st.metric(label="Tổng số ngày quá tải liên tục tích lũy qua các chu kỳ ngày", value=f"{days_overloaded} Ngày")
+
+val_progress = min(1.0, float(days_overloaded / 4.0)) if days_overloaded > 0 else 0.0
+st.progress(val_progress)
+
+if days_overloaded == 0:
+    st.info("Trạng thái: An toàn - Chưa ghi nhận ngày quá tải nào.")
+elif 1 <= days_overloaded <= 2:
+    st.success("Trạng thái: Xanh lá (1-2 ngày) - Áp lực tích tụ mức độ nhẹ.")
+elif days_overloaded == 3:
+    st.warning("Trạng thái: Vàng (3 ngày) - Ngưỡng báo động cần chú ý giảm tải.")
+else:
+    st.error("Trạng thái: Đỏ (Từ 4 ngày trở lên) - Nguy hiểm! Cơ thể học sinh kiệt quệ kéo dài qua nhiều ngày.")
+
+if days_overloaded >= 3:
+    st.error("📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH")
+    st.write(f"- Học sinh: {student_name}")
+    st.write("- Phân tích: Thiết bị đeo ghi nhận chỉ số phục hồi sức khỏe liên tục suy sụp qua các ngày.")
+    st.write("- Kết luận: Đây là biểu hiện suy nhược cơ thể khách quan dựa trên số liệu y sinh.")
+    st.write("- Khuyến nghị: Gia đình cần giảm 30% khối lượng học tập để tránh nguy cơ suy sụp tâm thần.")
+else:
+    st.success("📋 Tình trạng sức khỏe tuần này: Thể trạng học sinh ở mức ổn định, các chỉ số đạt chuẩn phục hồi.")
