@@ -22,7 +22,7 @@ if 'simulated_date' not in st.session_state:
     st.session_state.simulated_date = datetime.now(tz_vietnam)
 
 # --- 1. SIDEBAR MANAGEMENT ---
-st.sidebar.header("⚙️ Giập luật tín hiệu Vòng đeo tay")
+st.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
 student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
 base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
 
@@ -67,7 +67,7 @@ st.sidebar.markdown("---")
 current_date_string = st.session_state.simulated_date.strftime("%d/%m/%Y")
 st.sidebar.info(f"Ngày mô phỏng hiện tại: {current_date_string}")
 
-# NÚT QUA NGÀY MỚI (Cải tiến: Lưu kèm bản chụp dữ liệu chi tiết chi tiết để vẽ biểu đồ lịch sử)
+# NÚT QUA NGÀY MỚI (Bảo vệ cấu trúc DetailData an toàn)
 if st.sidebar.button("Qua ngày mới"):
     current_day_df = pd.DataFrame(st.session_state.current_day_records) if len(st.session_state.current_day_records) > 0 else pd.DataFrame()
     
@@ -94,11 +94,11 @@ if st.sidebar.button("Qua ngày mới"):
             "Nhịp tim trung bình": avg_bpm,
             "HRV trung bình": avg_hrv,
             "Trạng thái tổng quan": day_status,
-            "DetailData": current_day_df # Găm dữ liệu chi tiết vào đây để vẽ lại sau này
+            "DetailData": current_day_df
         }
         st.session_state.daily_summary_history.append(summary_record)
     else:
-        # Nếu ngày trống không có bấm nút nào, tạo dữ liệu giả lập chuẩn để biểu đồ lịch sử không bị lỗi rỗng
+        # Tạo dữ liệu nền tượng trưng nếu ngày đó học sinh không ghi điểm nào, tránh lỗi trống biểu đồ lịch sử
         dummy_time = "08:00:00"
         dummy_df = pd.DataFrame([{"Time": f"#1 ({dummy_time})", "RawTime": dummy_time, "BPM": 75, "HRV": int(base_hrv)}])
         summary_record = {
@@ -169,7 +169,7 @@ with col_left:
         with tab_hrv: st.info(empty_msg)
         with tab_data: st.info(empty_msg)
 
-# CỘT PHẢI: AI DIAGNOSIS & KHO LƯU TRỮ XEM LẠI BIỂU ĐỒ NGÀY CŨ
+# CỘT PHẢI: AI DIAGNOSIS & KHO LƯU TRỮ XEM LẠI BIỂU ĐỒ AN TOÀN
 with col_right:
     st.subheader("🤖 Chẩn đoán từ AI")
     st.info(f"Học sinh: {student_name}")
@@ -185,27 +185,30 @@ with col_right:
         if len(st.session_state.daily_summary_history) > 0:
             df_history = pd.DataFrame(st.session_state.daily_summary_history)
             
-            # 1. Hiển thị bảng danh sách tổng quan trước
             st.write("📋 **Bảng tổng hợp sức khỏe theo từng ngày:**")
             st.dataframe(df_history[["Ngày", "Nhịp tim trung bình", "HRV trung bình", "Trạng thái tổng quan"]], use_container_width=True)
             
             st.markdown("---")
-            # 2. TÍNH NĂNG XEM LẠI BIỂU ĐỒ: Tạo hộp chọn ngày cụ thể
             st.write("🔍 **Chọn một ngày để xem lại biểu đồ chi tiết của ngày đó:**")
             list_days = [item["Ngày"] for item in st.session_state.daily_summary_history]
             selected_day = st.selectbox("Chọn ngày cần xem lịch sử:", list_days)
             
-            # Lọc lấy bản ghi dữ liệu chi tiết của ngày được chọn để tái hiện biểu đồ
+            # Khử hoàn toàn lỗi KeyError bằng cách kiểm tra sự tồn tại của key "DetailData"
             selected_record = next(item for item in st.session_state.daily_summary_history if item["Ngày"] == selected_day)
-            df_history_detail = selected_record["DetailData"]
             
-            if not df_history_detail.empty:
-                st.write(f"📊 **Biểu đồ chi tiết ngày {selected_day}:**")
-                sub_tab_bpm, sub_tab_hrv = st.tabs(["💓 Nhịp tim lịch sử", "📊 Chỉ số HRV lịch sử"])
-                with sub_tab_bpm:
-                    st.line_chart(data=df_history_detail, x="Time", y="BPM")
-                with sub_tab_hrv:
-                    st.line_chart(data=df_history_detail, x="Time", y="HRV")
+            if "DetailData" in selected_record and isinstance(selected_record["DetailData"], pd.DataFrame):
+                df_history_detail = selected_record["DetailData"]
+                if not df_history_detail.empty:
+                    st.write(f"📊 **Biểu đồ chi tiết ngày {selected_day}:**")
+                    sub_tab_bpm, sub_tab_hrv = st.tabs(["💓 Nhịp tim lịch sử", "📊 Chỉ số HRV lịch sử"])
+                    with sub_tab_bpm:
+                        st.line_chart(data=df_history_detail, x="Time", y="BPM")
+                    with sub_tab_hrv:
+                        st.line_chart(data=df_history_detail, x="Time", y="HRV")
+                else:
+                    st.warning("Ngày này không có dữ liệu biểu đồ chi tiết.")
+            else:
+                st.warning("Dữ liệu chi tiết của ngày được chọn không khả dụng.")
         else:
             st.write("Chưa có lịch sử lưu trữ của ngày cũ. Hãy bấm 'Qua ngày mới' để bắt đầu tích lũy.")
 
@@ -231,7 +234,7 @@ else:
 if days_overloaded >= 3:
     st.error("📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH")
     st.write(f"- Học sinh: {student_name}")
-    st.write("- Phân tích: Thiết bị đeo ghi nhận chỉ số phục loyalty sức khỏe liên tục suy sụp qua các ngày.")
+    st.write("- Phân tích: Thiết bị đeo ghi nhận chỉ số phục hồi sức khỏe liên tục suy sụp qua các ngày.")
     st.write("- Kết luận: Đây là biểu hiện suy nhược cơ thể khách quan dựa trên số liệu y sinh.")
     st.write("- Khuyến nghị: Gia đình cần giảm 30% khối lượng học tập để tránh nguy cơ suy sụp tâm thần.")
 else:
