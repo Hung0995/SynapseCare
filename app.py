@@ -71,6 +71,12 @@ st.markdown("---")
 
 col_left, col_right = st.columns(2)
 
+# Khai báo dải giới hạn đồ thị riêng biệt để chống Google Translate dịch lỗi
+BPM_MIN = 40
+BPM_MAX = 160
+HRV_MIN = 10
+HRV_MAX = 100
+
 with col_left:
     st.subheader("📈 Biểu đồ giám sát sức khỏe")
     tab_bpm, tab_hrv = st.tabs(["💓 Nhịp tim (BPM)", "📊 Khả năng chống Stress (HRV)"])
@@ -78,13 +84,23 @@ with col_left:
     with tab_bpm:
         fig_bpm = go.Figure()
         fig_bpm.add_trace(go.Scatter(y=st.session_state.bpm_history, mode='lines+markers', name='Nhịp tim', line=dict(color='firebrick', width=3)))
-        fig_bpm.update_layout(title='Xu hướng Nhịp tim', xaxis_title='Mẫu', yaxis_title='BPM', yaxis=dict(range=))
+        fig_bpm.update_layout(
+            title='Xu hướng Nhịp tim', 
+            xaxis_title='Mẫu', 
+            yaxis_title='BPM', 
+            yaxis=dict(range=[BPM_MIN, BPM_MAX])
+        )
         st.plotly_chart(fig_bpm, use_container_width=True)
         
     with tab_hrv:
         fig_hrv = go.Figure()
         fig_hrv.add_trace(go.Scatter(y=st.session_state.hrv_history, mode='lines+markers', name='HRV', line=dict(color='royalblue', width=3)))
-        fig_hrv.update_layout(title='Xu hướng HRV', xaxis_title='Mẫu', yaxis_title='ms', yaxis=dict(range=))
+        fig_hrv.update_layout(
+            title='Xu hướng HRV', 
+            xaxis_title='Mẫu', 
+            yaxis_title='ms', 
+            yaxis=dict(range=[HRV_MIN, HRV_MAX])
+        )
         st.plotly_chart(fig_hrv, use_container_width=True)
 
 with col_right:
