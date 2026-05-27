@@ -1,20 +1,17 @@
 import streamlit as st
 import plotly.graph_objects as go
 
-# Cấu hình trang web hiển thị
 st.set_page_config(page_title="SynapseCare Dashboard", layout="wide")
 
 st.title("🧠 SynapseCare - Hệ Thống Tối Ưu Hiệu Suất & Thể Trạng Học Đường")
 st.subheader("Trợ lý AI phân tích sinh học và quản lý Stress dành cho Gen Z")
 st.markdown("---")
 
-# Khởi tạo dữ liệu mẫu nếu chưa có
 if 'bpm_history' not in st.session_state:
     st.session_state.bpm_history = []
 if 'hrv_history' not in st.session_state:
     st.session_state.hrv_history = []
 
-# --- THANH ĐIỀU KHIỂN BÊN TRÁI (SIDEBAR) ---
 st.sidebar.header("⚙️ Giả lập tín hiệu Vòng đeo tay")
 student_name = st.sidebar.text_input("Tên học sinh:", "Nguyễn Văn A")
 base_hrv = st.sidebar.slider("Chỉ số HRV nền (Lúc khỏe mạnh):", 40, 100, 65)
@@ -23,7 +20,6 @@ st.sidebar.markdown("---")
 st.sidebar.write("👉 *Kéo các thanh dưới đây để giả lập trạng thái của học sinh trước Ban giám khảo:*")
 sim_state = st.sidebar.selectbox("Chọn trạng thái nhanh:", ["Bình thường", "Cày đề quá tải", "Áp lực phòng thi"])
 
-# Đồng bộ giới hạn Min - Max từ 40->160 cho BPM và 10->100 cho HRV ở cả 3 trạng thái
 if sim_state == "Bình thường":
     bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 75)
     hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 70)
@@ -34,7 +30,6 @@ else:
     bpm = st.sidebar.slider("Nhịp tim thực tế (BPM):", 40, 160, 120)
     hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, 15)
 
-# Nút bấm đẩy dữ liệu hiện tại vào biểu đồ
 if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
     st.session_state.bpm_history.append(bpm)
     st.session_state.hrv_history.append(hrv)
@@ -42,11 +37,9 @@ if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
         st.session_state.bpm_history.pop(0)
         st.session_state.hrv_history.pop(0)
 
-# --- THUẬT TOÁN AI PHÂN TÍCH CHẠY THỜI GIAN THỰC THEO THANH GẠT ---
 hrv_ratio = hrv / base_hrv
 mana = int(max(0, min(100, hrv_ratio * 100)))
 
-# Phân vùng AI để đổi màu trực tiếp
 is_panic = bpm > 100 and hrv < 30
 is_burnout = mana < 35 and not is_panic
 is_overload = 35 <= mana < 65 and not is_panic
@@ -64,9 +57,7 @@ else:
     status = "✅ TRẠNG THÁI VÀNG (Peak Performance)"
     action = "Não bộ đang ở trạng thái tối ưu nhất. Thích hợp để học các môn tư duy cao hoặc cày đề khó!"
 
-# --- HIỂN THỊ GIAO DIỆN CHÍNH ---
 col1, col2, col3 = st.columns(3)
-
 with col1:
     st.metric(label="💓 Nhịp tim hiện tại", value=f"{bpm} BPM")
 with col2:
@@ -78,52 +69,34 @@ with col3:
 
 st.markdown("---")
 
-# Chia đôi màn hình cho Biểu đồ (Trái) và AI Chẩn đoán (Phải)
 col_left, col_right = st.columns(2)
 
 with col_left:
     st.subheader("📈 Biểu đồ giám sát sức khỏe")
-    
-    # Tạo 2 Tab riêng biệt cho Nhịp tim và HRV
     tab_bpm, tab_hrv = st.tabs(["💓 Nhịp tim (BPM)", "📊 Khả năng chống Stress (HRV)"])
     
     with tab_bpm:
         fig_bpm = go.Figure()
-        fig_bpm.add_trace(go.Scatter(y=st.session_state.bpm_history, mode='lines+markers', name='Nhịp tim (BPM)', line=dict(color='firebrick', width=3)))
-        fig_bpm.update_layout(
-            title='Xu hướng Nhịp tim trong phiên học tập', 
-            xaxis_title='Lần cập nhật mẫu', 
-            yaxis_title='BPM',
-            yaxis=dict(range=)
-        )
+        fig_bpm.add_trace(go.Scatter(y=st.session_state.bpm_history, mode='lines+markers', name='Nhịp tim', line=dict(color='firebrick', width=3)))
+        fig_bpm.update_layout(title='Xu hướng Nhịp tim', xaxis_title='Mẫu', yaxis_title='BPM', yaxis=dict(range=))
         st.plotly_chart(fig_bpm, use_container_width=True)
         
     with tab_hrv:
         fig_hrv = go.Figure()
-        fig_hrv.add_trace(go.Scatter(y=st.session_state.hrv_history, mode='lines+markers', name='Stress (HRV)', line=dict(color='royalblue', width=3)))
-        fig_hrv.update_layout(
-            title='Xu hướng Biến thiên nhịp tim (HRV)', 
-            xaxis_title='Lần cập nhật mẫu', 
-            yaxis_title='ms',
-            yaxis=dict(range=)
-        )
+        fig_hrv.add_trace(go.Scatter(y=st.session_state.hrv_history, mode='lines+markers', name='HRV', line=dict(color='royalblue', width=3)))
+        fig_hrv.update_layout(title='Xu hướng HRV', xaxis_title='Mẫu', yaxis_title='ms', yaxis=dict(range=))
         st.plotly_chart(fig_hrv, use_container_width=True)
 
 with col_right:
     st.subheader("🤖 Chẩn đoán từ AI")
     st.info(f"**Học sinh:** {student_name}")
-    
-    # Khối màu AI chẩn đoán tự thay đổi theo tay kéo thanh gạt
-    if is_panic:
-        st.error(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
-    elif is_burnout:
+    if is_panic or is_burnout:
         st.error(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
     elif is_overload:
         st.warning(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
     else:
         st.success(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
 
-# --- PHẦN PHỤ HUYNH & NHÀ TRƯỜNG Ở DƯỚI CÙNG ---
 st.markdown("---")
 st.subheader("👨‍👩‍👧‍👦 Góc dành cho Phụ huynh & Nhà trường (Tính năng Đa năng)")
 
@@ -131,8 +104,8 @@ days_overloaded = st.slider("Giả lập số ngày học sinh bị quá tải l
 
 if days_overloaded >= 3:
     st.error(f"📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH EM {student_name.upper()}")
-    st.write(f"* **Phân tích:** Hệ thống ghi nhận chỉ số phục hồi thần kinh thực vật (HRV) liên tục dưới ngưỡng an toàn trong {days_overloaded} ngày qua. Cơ thể đang ở trạng thái kiệt quệ sinh học (Physical Burnout).")
-    st.write("* **Kết luận:** Đây là biểu hiện suy nhược cơ thể khách quan dựa trên số liệu y sinh, không phải sự lười biếng hay viện cớ.")
-    st.write("* **Khuyến nghị:** Gia đình cần chủ động cắt giảm 30% khối lượng học thêm hoặc thời gian cày đêm của em để tránh nguy cơ suy sụp tâm thần đột ngột trước kỳ thi.")
+    st.write(f"* **Phân tích:** Chỉ số phục hồi thần kinh (HRV) liên tục dưới ngưỡng an toàn trong {days_overloaded} ngày qua.")
+    st.write("* **Kết luận:** Đây là biểu hiện suy nhược cơ thể khách quan dựa trên số liệu y sinh.")
+    st.write("* **Khuyến nghị:** Gia đình cần giảm 30% khối lượng học tập để tránh nguy cơ suy sụp tâm thần trước kỳ thi.")
 else:
-    st.success("📋 Tình trạng sức khỏe tuần này: Thể trạng học sinh ở mức ổn định, các chỉ số giấc ngủ và nhịp tim nghỉ ngơi đạt chuẩn.")
+    st.success("📋 Tình trạng sức khỏe tuần này: Thể trạng học sinh ở mức ổn định, các chỉ số đạt chuẩn phục hồi.")
