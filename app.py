@@ -55,10 +55,10 @@ if st.sidebar.button("Ghi dữ liệu vào biểu đồ"):
     point_idx = len(st.session_state.current_day_records) + 1
     display_axis = f"#{point_idx} ({time_str})"
     new_record = {
-        "Mốc thời gian": display_axis,
-        "Giờ gốc": time_str,
-        "Nhịp tim (BPM)": int(bpm),
-        "Chỉ số HRV (ms)": int(hrv)
+        "Time": display_axis,
+        "RawTime": time_str,
+        "BPM": int(bpm),
+        "HRV": int(hrv)
     }
     st.session_state.current_day_records.append(new_record)
 
@@ -70,8 +70,8 @@ st.sidebar.info(f"Ngày mô phỏng hiện tại: {current_date_string}")
 if st.sidebar.button("Qua ngày mới"):
     if len(st.session_state.current_day_records) > 0:
         df_temp = pd.DataFrame(st.session_state.current_day_records)
-        avg_bpm = int(df_temp["Nhịp tim (BPM)"].mean())
-        avg_hrv = int(df_temp["Chỉ số HRV (ms)"].mean())
+        avg_bpm = int(df_temp["BPM"].mean())
+        avg_hrv = int(df_temp["HRV"].mean())
         day_mana = int((avg_hrv / safe_base) * 100)
         
         if avg_bpm > 100 and avg_hrv < 30:
@@ -137,7 +137,7 @@ else:
     status = "✅ TRẠNG THÁI VÀNG (Peak Performance)"
     action = "Não bộ đang ở trạng thái tối ưu nhất. Thích hợp để học các môn tư duy cao hoặc cày đề khó!"
 
-# CỘT TRÁI: BIỂU ĐỒ (ĐỘ NHẠY CAO & CẮT GIÂY TRONG NHẬT KÝ)
+# CỘT TRÁI: BIỂU ĐỒ & NHẬT KÝ
 with col_left:
     st.subheader("📈 Biểu đồ dữ liệu giám sát hôm nay")
     tab_bpm, tab_hrv, tab_data = st.tabs(["💓 Nhịp tim", "📊 Chỉ số HRV", "📋 Nhật ký hôm nay"])
@@ -147,13 +147,17 @@ with col_left:
         df_current = pd.DataFrame(st.session_state.current_day_records)
         
         with tab_bpm:
-            st.line_chart(data=df_current, x="Mốc thời gian", y="Nhịp tim (BPM)")
+            # Sử dụng trục X và Y thuần tiếng Anh an toàn tuyệt đối
+            st.line_chart(data=df_current, x="Time", y="BPM")
         with tab_hrv:
-            st.line_chart(data=df_current, x="Mốc thời gian", y="Chỉ số HRV (ms)")
+            st.line_chart(data=df_current, x="Time", y="HRV")
         with tab_data:
             df_display = df_current.copy()
-            df_display["Thời gian"] = df_display["Giờ gốc"].apply(lambda x: str(x)[:-3])
-            df_display = df_display[["Thời gian", "Nhịp tim (BPM)", "Chỉ số HRV (ms)"]]
+            # Xử lý cắt bỏ phần Giây để bảng chỉ hiển thị Giờ:Phút
+            df_display["Thời gian (Giờ:Phút)"] = df_display["RawTime"].apply(lambda x: str(x)[:-3])
+            # Đổi tên cột hiển thị tiếng Việt trực quan cho người xem
+            df_display = df_display.rename(columns={"BPM": "Nhịp tim (BPM)", "HRV": "Chỉ số HRV (ms)"})
+            df_display = df_display[["Thời gian (Giờ:Phút)", "Nhịp tim (BPM)", "Chỉ số HRV (ms)"]]
             st.dataframe(df_display, use_container_width=True)
     else:
         empty_msg = "🔄 Chu kỳ ngày mới trống. Hãy bấm nút 'Ghi dữ liệu vào biểu đồ' ở thanh bên để nạp dữ liệu sinh học."
