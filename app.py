@@ -47,7 +47,8 @@ if st.sidebar.button("Ghi dữ liệu vào biểu đồ 📊"):
         st.session_state.hrv_history.pop(0)
         
     if is_panic or is_burnout or is_overload:
-        st.session_state.auto_days_overloaded = min(7, st.session_state.auto_days_overloaded + 1)
+        # ĐÃ PHÁ BỎ GIỚI HẠN: Số ngày tăng tự do không bị chặn ở số 7 nữa
+        st.session_state.auto_days_overloaded += 1
     elif bpm <= 80 and hrv >= 60:
         st.session_state.auto_days_overloaded = 0
 
@@ -109,29 +110,21 @@ with col_right:
     else:
         st.success(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
 
-# --- GÓC PHỤ HUYNH TỰ ĐỘNG ĐỔI MÀU BẰNG HÀM PYTHON NGUYÊN BẢN ---
+# --- GÓC PHỤ HUYNH KHÔNG GIỚI HẠN SỐ NGÀY ---
 st.markdown("---")
 st.subheader("👨‍👩‍👧‍👦 Góc dành cho Phụ huynh & Nhà trường (Tính năng Đa năng)")
 
 days = st.session_state.auto_days_overloaded
-st.write(f"📊 **Số ngày học sinh bị quá tải liên tục (AI tự động chấm): {days} / 7 ngày**")
 
-# Quy đổi tỷ lệ phần trăm tiến trình (từ 0.0 đến 1.0)
-progress_value = float(days / 7.0)
-
-# Gom cụm đổi màu thông minh bằng widget nguyên bản của Streamlit để khóa lỗi hoàn toàn
+# Hiển thị số ngày quá tải tích lũy bằng ô trạng thái màu sắc động
 if days == 0:
-    st.write("🟢 *Trạng thái: An toàn tuyệt đối - Hệ thần kinh đang phục hồi hoàn hảo.*")
-    st.progress(progress_value) # 0% - Không màu / xám mặc định
+    st.success(f"🟢 **Hệ thống ghi nhận:** Học sinh hiện tại không bị quá tải tích lũy. Thể trạng phục hồi tốt.")
 elif 1 <= days <= 2:
-    st.success(f"🟢 Trạng thái: Cảnh báo sớm - Đã tích tụ {days} ngày áp lực liên tiếp.")
-    st.progress(progress_value)
+    st.success(f"🟢 **Hệ thống ghi nhận:** Tích tụ {days} ngày áp lực liên tiếp (Mức độ nhẹ - Trong ngưỡng kiểm soát).")
 elif days == 3:
-    st.warning("🟡 Trạng thái: Ngưỡng báo động - Đạt mốc 3 ngày quá tải tích tụ.")
-    st.progress(progress_value)
+    st.warning(f"🟡 **Hệ thống ghi nhận:** Tích tụ {days} ngày quá tải liên tiếp (Chạm ngưỡng báo động đỏ!).")
 else:
-    st.error(f"🔴 Trạng thái: Nguy hiểm cực độ - Cơ thể đã kiệt quệ {days} ngày liên tục!")
-    st.progress(progress_value)
+    st.error(f"🔴 **BÁO ĐỘNG NGUY HIỂM:** Học sinh đã bị quá tải liên tục {days} ngày! Nguy cơ kiệt quệ tâm thần rất cao.")
 
 if days >= 3:
     st.error(f"📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH EM {student_name.upper()}")
