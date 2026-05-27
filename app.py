@@ -109,34 +109,29 @@ with col_right:
     else:
         st.success(f"**Trạng thái hệ thần kinh:**\n\n{status}\n\n**Chỉ định hành động:**\n\n{action}")
 
-# --- PHẦN PHỤ HUYNH TỰ ĐỘNG ĐỔI MÀU THÔNG MINH ---
+# --- GÓC PHỤ HUYNH TỰ ĐỘNG ĐỔI MÀU BẰNG HÀM PYTHON NGUYÊN BẢN ---
 st.markdown("---")
 st.subheader("👨‍👩‍👧‍👦 Góc dành cho Phụ huynh & Nhà trường (Tính năng Đa năng)")
 
 days = st.session_state.auto_days_overloaded
-
-# Tính toán màu sắc dựa trên số ngày theo đúng yêu cầu của bạn
-if days == 0:
-    color = "#e0e0e0"  # Không màu (Xám nhạt)
-elif 1 <= days <= 2:
-    color = "#2ecc71"  # Màu xanh lá
-elif days == 3:
-    color = "#f1c40f"  # Màu vàng
-else:
-    color = "#e74c3c"  # Màu đỏ rực
-
-# Tính toán phần trăm độ dài thanh (tối đa 7 ngày tương đương 100%)
-width_percent = int((days / 7) * 100)
-
 st.write(f"📊 **Số ngày học sinh bị quá tải liên tục (AI tự động chấm): {days} / 7 ngày**")
 
-# Vẽ thanh trạng thái đổi màu thông minh bằng HTML/CSS
-st.markdown(f"""
-    <div style="width: 100%; background-color: #f0f2f6; border-radius: 10px; padding: 3px; margin-bottom: 20px;">
-        <div style="width: {width_percent}%; background-color: {color}; height: 20px; border-radius: 8px; transition: width 0.5s ease-in-out;">
-        </div>
-    </div>
-""", unsafe_html=True)
+# Quy đổi tỷ lệ phần trăm tiến trình (từ 0.0 đến 1.0)
+progress_value = float(days / 7.0)
+
+# Gom cụm đổi màu thông minh bằng widget nguyên bản của Streamlit để khóa lỗi hoàn toàn
+if days == 0:
+    st.write("🟢 *Trạng thái: An toàn tuyệt đối - Hệ thần kinh đang phục hồi hoàn hảo.*")
+    st.progress(progress_value) # 0% - Không màu / xám mặc định
+elif 1 <= days <= 2:
+    st.success(f"🟢 Trạng thái: Cảnh báo sớm - Đã tích tụ {days} ngày áp lực liên tiếp.")
+    st.progress(progress_value)
+elif days == 3:
+    st.warning("🟡 Trạng thái: Ngưỡng báo động - Đạt mốc 3 ngày quá tải tích tụ.")
+    st.progress(progress_value)
+else:
+    st.error(f"🔴 Trạng thái: Nguy hiểm cực độ - Cơ thể đã kiệt quệ {days} ngày liên tục!")
+    st.progress(progress_value)
 
 if days >= 3:
     st.error(f"📋 BÁO CÁO Y TẾ TỰ ĐỘNG GỬI PHỤ HUYNH EM {student_name.upper()}")
