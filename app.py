@@ -5,13 +5,12 @@ from zoneinfo import ZoneInfo
 
 st.set_page_config(page_title="SynapseCare Dashboard", layout="wide")
 
-st.title("🧠 SynapseCare – Hệ thống theo dõi stress sinh lý học đường dựa trên BPM và HRV")
+st.title("🧠 SynapseCare – Hệ thống theo dõi stress sinh lý học đường")
 st.subheader("Giải pháp phân tích dữ liệu sinh học dựa trên chỉ số BPM và HRV dành cho Gen Z")
 st.markdown("---")
 
 tz_vietnam = ZoneInfo("Asia/Ho_Chi_Minh")
 
-# Khởi tạo các kho lưu trữ dữ liệu thông minh trong session_state
 if 'current_day_records' not in st.session_state:
     st.session_state.current_day_records = []  
 if 'daily_summary_history' not in st.session_state:
@@ -46,9 +45,12 @@ hrv = st.sidebar.slider("Biến thiên nhịp tim (HRV):", 10, 100, calc_hrv)
 safe_base = float(base_hrv) if base_hrv > 0 else 1.0
 mana = int(max(0, min(100, (float(hrv) / safe_base) * 100.0)))
 
-is_panic = bpm > 100 and hrv < 30
-is_burnout = mana < 35 and not is_panic
-is_overload = 35 <= mana < 65 and not is_panic
+# --- THUẬT TOÁN CHẨN ĐOÁN MỚI: SỬA LỖI BPM CAO ---
+is_critical_tachycardia = bpm >= 140  # Nhịp tim quá cao cực kỳ nguy hiểm, ghi đè mọi chỉ số khác
+is_panic = (bpm > 100 and hrv < 30) and not is_critical_tachycardia
+is_high_stress_arousal = (bpm > 100 and hrv >= 30) and not is_critical_tachycardia
+is_burnout = (mana < 35) and not is_panic and not is_critical_tachycardia and not is_high_stress_arousal
+is_overload = (35 <= mana < 65) and not is_panic and not is_critical_tachycardia and not is_high_stress_arousal
 
 # NÚT GHI DỮ LIỆU
 if st.sidebar.button("Ghi dữ liệu vào biểu đồ"):
@@ -67,7 +69,7 @@ st.sidebar.markdown("---")
 current_date_string = st.session_state.simulated_date.strftime("%d/%m/%Y")
 st.sidebar.info(f"Ngày mô phỏng hiện tại: {current_date_string}")
 
-# NÚT QUA NGÀY MỚI (Bảo vệ cấu trúc DetailData an toàn)
+# NÚT QUA NGÀY MỚI (Cập nhật phân loại cho đồng bộ lịch sử)
 if st.sidebar.button("Qua ngày mới"):
     current_day_df = pd.DataFrame(st.session_state.current_day_records) if len(st.session_state.current_day_records) > 0 else pd.DataFrame()
     
@@ -76,8 +78,14 @@ if st.sidebar.button("Qua ngày mới"):
         avg_hrv = int(current_day_df["HRV"].mean())
         day_mana = int((avg_hrv / safe_base) * 100)
         
-        if avg_bpm > 100 and avg_hrv < 30:
+        if avg_bpm >= 140:
+            day_status = "Nguy hiểm (Nhịp tim quá cao)"
+            st.session_state.auto_days_overloaded += 1
+        elif avg_bpm > 100 and avg_hrv < 30:
             day_status = "Hoảng loạn cực độ"
+            st.session_state.auto_days_overloaded += 1
+        elif avg_bpm > 100 and avg_hrv >= 30:
+            day_status = "Căng thẳng kích thích cao"
             st.session_state.auto_days_overloaded += 1
         elif day_mana < 35:
             day_status = "Kiệt quệ (Burnout)"
@@ -98,7 +106,6 @@ if st.sidebar.button("Qua ngày mới"):
         }
         st.session_state.daily_summary_history.append(summary_record)
     else:
-        # Tạo dữ liệu nền tượng trưng nếu ngày đó học sinh không ghi điểm nào, tránh lỗi trống biểu đồ lịch sử
         dummy_time = "08:00:00"
         dummy_df = pd.DataFrame([{"Time": f"#1 ({dummy_time})", "RawTime": dummy_time, "BPM": 75, "HRV": int(base_hrv)}])
         summary_record = {
@@ -131,9 +138,16 @@ st.markdown("---")
 # --- 3. MAIN COLUMNS ---
 col_left, col_right = st.columns(2)
 
-if is_panic:
+# ĐỊNH NGHĨA LẠI NỘI DUNG HIỂN THỊ CẢNH BÁO CỦA AI
+if is_critical_tachycardia:
+    status = "🚨 BÁO ĐỘNG ĐỎ: NHỊP TIM ĐẠT NGƯỠNG NGUY HIỂM LÂM SÀNG"
+    action = "CẢNH BÁO: Nhịp tim vượt mức 140 BPM khi đang ngồi yên! Có nguy cơ sốc phản vệ, ngộ độc chất kích thích (Caffeine quá liều) hoặc hoảng loạn nặng. Yêu cầu dừng mọi hoạt động, thông báo ngay cho y tế trường học!"
+elif is_panic:
     status = "🚨 NGUY CƠ HOẢNG LOẠN (Phòng thi/Áp lực cực độ)"
     action = "Kích hoạt chế độ Anti-Choke: Rung thiết bị theo nhịp thở 4-7-8 để điều hòa tim mạch ngay lập tức!"
+elif is_high_stress_arousal:
+    status = "⚠️ CẢNH BÁO: STRESS KÍCH THÍCH CAO (Tim quá tải)"
+    action = "Dù chỉ số HRV phục hồi tốt, nhưng nhịp tim cao (>100 BPM) cho thấy cơ thể đang phải gồng mình chịu áp lực lớn để tập trung. Đề xuất: Uống một ngụm nước, thả lỏng vai và điều hòa lại nhịp độ học tập."
 elif is_burnout:
     status = "❌ KIỆT QUỆ NĂNG LƯỢNG SINH HỌC (Burnout)"
     action = "Báo động Đỏ! Khóa đồng hồ đếm giờ học. Đề xuất: Đi bộ thả lỏng 15p hoặc nghe nhạc Lo-Fi chữa lành."
@@ -169,13 +183,13 @@ with col_left:
         with tab_hrv: st.info(empty_msg)
         with tab_data: st.info(empty_msg)
 
-# CỘT PHẢI: AI DIAGNOSIS & KHO LƯU TRỮ XEM LẠI BIỂU ĐỒ AN TOÀN
+# CỘT PHẢI: AI DIAGNOSIS
 with col_right:
     st.subheader("🤖 Chẩn đoán từ AI")
     st.info(f"Học sinh: {student_name}")
-    if is_panic or is_burnout:
+    if is_panic or is_burnout or is_critical_tachycardia:
         st.error(f"{status}\n\n{action}")
-    elif is_overload:
+    elif is_overload or is_high_stress_arousal:
         st.warning(f"{status}\n\n{action}")
     else:
         st.success(f"{status}\n\n{action}")
@@ -193,7 +207,6 @@ with col_right:
             list_days = [item["Ngày"] for item in st.session_state.daily_summary_history]
             selected_day = st.selectbox("Chọn ngày cần xem lịch sử:", list_days)
             
-            # Khử hoàn toàn lỗi KeyError bằng cách kiểm tra sự tồn tại của key "DetailData"
             selected_record = next(item for item in st.session_state.daily_summary_history if item["Ngày"] == selected_day)
             
             if "DetailData" in selected_record and isinstance(selected_record["DetailData"], pd.DataFrame):
